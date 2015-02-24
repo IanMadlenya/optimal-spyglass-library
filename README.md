@@ -6,3 +6,5 @@ Copyright 2015 OptimalBI - Licensed under the Apache License, Version 2.0
 ## What is it? ##
 This is the library of code that is used by OptimalSpyglass to access and store information about the AWS Cloud!
 See the main OptimalSpyglass repo for more information.
+
+### Change Log: ###
