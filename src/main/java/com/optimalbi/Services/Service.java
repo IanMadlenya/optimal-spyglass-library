@@ -55,10 +55,6 @@ public interface Service extends Comparable<Service>{
 
     Region serviceRegion();
 
-    void startService();
-
-    void stopService();
-
     void attachPricing(Map<String, Double> pricing);
 
     public Map<String, Double> getPricing();
