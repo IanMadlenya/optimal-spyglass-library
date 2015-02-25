@@ -38,6 +38,8 @@ public class LocalRDSService extends AmazonService {
     private final Region region;
     private final DBInstance thisService;
     private VBox drawing = null;
+    private Map<String, Double> pricing = null;
+
 
     private Label instanceState;
 
@@ -71,20 +73,12 @@ public class LocalRDSService extends AmazonService {
         return region;
     }
 
-    public void startService() {
-
-    }
-
-    public void stopService() {
-
-    }
-
     public void attachPricing(Map<String, Double> pricing) {
-
+        this.pricing = pricing;
     }
 
-    public Map<String, Double> getPricing() {
-        return null;
+    public Map<String, Double> getPricing(){
+        return pricing;
     }
 
     public String serviceType() {
