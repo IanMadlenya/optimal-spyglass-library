@@ -5,3 +5,5 @@ credentials
 log.txt
 settings.cfg
 settings.xml
+mavenlog.txt
+uploadkeys.bat
