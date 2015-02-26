@@ -59,7 +59,7 @@ public class AmazonAccount{
 
     private final BooleanProperty ready = new SimpleBooleanProperty(false);
     //File names
-    private final File ec2Pricing = new File("EC2.Pricing.csv");
+    private Map<String,Map<String,Double>> pricingMap;
     private final IntegerProperty completed = new SimpleIntegerProperty(0);
     private boolean readyValue = false;
     private List<Service> services;
@@ -74,6 +74,10 @@ public class AmazonAccount{
         this.logger = logger;
 
         runningCount = new HashMap<>();
+    }
+
+    public void attachPricing(Map<String,Map<String,Double>> pricingMap){
+        this.pricingMap = pricingMap;
     }
 
     public void startConfigure() {
@@ -102,7 +106,6 @@ public class AmazonAccount{
     }
 
     private void populateEc2() throws AmazonClientException {
-        Map<String, Double> pricing = readEc2Pricing();
         for (Region region : getRegions()) {
             try {
 //                services.addAll(Ec2Service.populateServices(region, getCredentials(), getLogger(), pricing));
@@ -119,8 +122,8 @@ public class AmazonAccount{
 
                 for (Instance i : inst) {
                     Service temp = new LocalEc2Service(i.getInstanceId(), getCredentials(), region, ec2, getLogger());
-                    if (pricing != null) {
-                        temp.attachPricing(pricing);
+                    if(pricingMap != null){
+                        temp.attachPricing(pricingMap.get("EC2"));
                     }
                     services.add(temp);
                 }
@@ -153,11 +156,14 @@ public class AmazonAccount{
                     getLogger().info("Redshift, Adding " + clusters.size() + " clusters from " + region.getName());
                     for (Cluster cluster : clusters) {
                         getLogger().info("Cluster: " + cluster.getClusterIdentifier());
-                        services.add(new LocalRedshiftService(cluster.getClusterIdentifier(), getCredentials(), region, cluster, getLogger()));
+                        LocalRedshiftService temp = new LocalRedshiftService(cluster.getClusterIdentifier(), getCredentials(), region, cluster, getLogger());
+                        if(pricingMap != null){
+                            temp.attachPricing(pricingMap.get("Redshift"));
+                        }
+                        services.add(temp);
                     }
                 }else{
                     getLogger().info("Redshift, NOPE from " + region.getName());
-
                 }
             } catch (AmazonClientException e) {
                 throw new AmazonClientException(region.getName() + " " + e.getMessage());
@@ -170,7 +176,6 @@ public class AmazonAccount{
         for (Region region : getRegions()) {
             try {
                 if(region.isServiceSupported(ServiceAbbreviations.RDS)) {
-//                services.addAll(RDSService.populateServices(region, getCredentials(), getLogger()));
                     AmazonRDSClient rds = new AmazonRDSClient(getCredentials().getCredentials());
                     rds.setRegion(region);
 
@@ -178,7 +183,15 @@ public class AmazonAccount{
                     List<DBInstance> instances = result.getDBInstances();
 
                     getLogger().info("RDS, Adding " + instances.size() + " instances from " + region.getName());
-                    services.addAll(instances.stream().map(i -> new LocalRDSService(i.getDBInstanceIdentifier(), getCredentials(), region, i, getLogger())).collect(Collectors.toList()));
+
+                    for(DBInstance i : instances){
+                        LocalRDSService temp = new LocalRDSService(i.getDBInstanceIdentifier(), getCredentials(), region, i, getLogger());
+                        if(pricingMap != null){
+                            if(pricingMap.get("RDS") != null) {
+                                temp.attachPricing(pricingMap.get("RDS"));
+                            }
+                        }
+                    }
                 }else {
                     getLogger().info("RDS, NOPE from " + region.getName());
                 }
@@ -250,43 +263,6 @@ public class AmazonAccount{
 
     public Map<String, Integer> getRunningCount() {
         return runningCount;
-    }
-
-    private Map<String, Double> readEc2Pricing() {
-        Map<String, Double> pricing = new HashMap<>();
-
-        BufferedReader fileReader = null;
-
-        if (!ec2Pricing.exists()) {
-            return null;
-        }
-
-        try {
-            fileReader = new BufferedReader(new FileReader(ec2Pricing));
-
-            fileReader.readLine();
-
-            String line = fileReader.readLine();
-
-            while (line != null) {
-                String[] split = line.split(",");
-                pricing.put(split[0], Double.valueOf(split[6]));
-                line = fileReader.readLine();
-            }
-
-        } catch (IOException e) {
-            getLogger().error("Failed to read ec2Pricing file properly");
-            return null;
-        } finally {
-            if (fileReader != null) {
-                try {
-                    fileReader.close();
-                } catch (IOException e) {
-                    getLogger().error("Failed to close fileReader");
-                }
-            }
-        }
-        return pricing;
     }
 
     public IntegerProperty getCompleted() {
