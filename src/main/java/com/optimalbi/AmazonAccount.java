@@ -39,14 +39,8 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.scene.layout.VBox;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created by Timothy Gray on 30/10/2014.
@@ -59,7 +53,7 @@ public class AmazonAccount{
 
     private final BooleanProperty ready = new SimpleBooleanProperty(false);
     //File names
-    private Map<String,Map<String,Double>> pricingMap;
+    private ServicePricing servicePricing;
     private final IntegerProperty completed = new SimpleIntegerProperty(0);
     private boolean readyValue = false;
     private List<Service> services;
@@ -76,8 +70,8 @@ public class AmazonAccount{
         runningCount = new HashMap<>();
     }
 
-    public void attachPricing(Map<String,Map<String,Double>> pricingMap){
-        this.pricingMap = pricingMap;
+    public void attachPricing(ServicePricing pricingMap){
+        this.servicePricing = pricingMap;
     }
 
     public void startConfigure() {
@@ -122,8 +116,8 @@ public class AmazonAccount{
 
                 for (Instance i : inst) {
                     Service temp = new LocalEc2Service(i.getInstanceId(), getCredentials(), region, ec2, getLogger());
-                    if(pricingMap != null){
-                        temp.attachPricing(pricingMap.get("EC2"));
+                    if(servicePricing != null){
+                        temp.attachPricing(servicePricing.getEc2Pricing());
                     }
                     services.add(temp);
                 }
@@ -157,8 +151,8 @@ public class AmazonAccount{
                     for (Cluster cluster : clusters) {
                         getLogger().info("Cluster: " + cluster.getClusterIdentifier());
                         LocalRedshiftService temp = new LocalRedshiftService(cluster.getClusterIdentifier(), getCredentials(), region, cluster, getLogger());
-                        if(pricingMap != null){
-                            temp.attachPricing(pricingMap.get("Redshift"));
+                        if(servicePricing != null){
+                            temp.attachPricing(servicePricing.getRedshiftPricing());
                         }
                         services.add(temp);
                     }
@@ -186,9 +180,9 @@ public class AmazonAccount{
 
                     for(DBInstance i : instances){
                         LocalRDSService temp = new LocalRDSService(i.getDBInstanceIdentifier(), getCredentials(), region, i, getLogger());
-                        if(pricingMap != null){
-                            if(pricingMap.get("RDS") != null) {
-                                temp.attachPricing(pricingMap.get("RDS"));
+                        if(servicePricing != null){
+                            if(servicePricing.getRDSPricing() != null) {
+                                temp.attachPricing(servicePricing.getRDSPricing());
                             }
                         }
                     }

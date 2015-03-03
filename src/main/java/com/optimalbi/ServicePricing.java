@@ -61,6 +61,7 @@ public class ServicePricing {
                         logger.warn("Cannot find service for: " + split[0]);
                         break;
                 }
+                line = fileReader.readLine();
             }
 
         } catch (IOException e) {
