@@ -30,6 +30,10 @@ public class ServicePricing {
         pricingMap.put("RDS",new HashMap<>());
         pricingMap.put("Redshift",new HashMap<>());
 
+        int serviceNameIndex = -1;
+        int serviceSizeIndex = -1;
+        int costPerHourIndex = -1;
+
         BufferedReader fileReader = null;
 
         if (!pricing.exists()) {
@@ -43,22 +47,31 @@ public class ServicePricing {
             String headerLine = fileReader.readLine();
             String[] headers = headerLine.split(",");
 
+            //Service.Name,Service.Size,Cost.Per.Hour
+            for(int i = 0;i<headers.length;i++){
+                switch (headers[i]){
+                    case "Service.Name" : serviceNameIndex = i; break;
+                    case "Service.Size" : serviceSizeIndex = i; break;
+                    case "Cost.Per.Hour" : costPerHourIndex = i; break;
+                }
+            }
+
             String line = fileReader.readLine();
 
             while (line != null) {
                 String[] split = line.split(",");
-                switch (split[0]){
+                switch (split[serviceNameIndex]){
                     case "EC2" :
-                        pricingMap.get("EC2").put(split[1],Double.valueOf(split[2]));
+                        pricingMap.get("EC2").put(split[serviceSizeIndex],Double.valueOf(split[costPerHourIndex]));
                         break;
                     case "RDS" :
-                        pricingMap.get("RDS").put(split[1],Double.valueOf(split[2]));
+                        pricingMap.get("RDS").put(split[serviceSizeIndex],Double.valueOf(split[costPerHourIndex]));
                         break;
                     case "Redshift" :
-                        pricingMap.get("Redshift").put(split[1],Double.valueOf(split[2]));
+                        pricingMap.get("Redshift").put(split[serviceSizeIndex],Double.valueOf(split[costPerHourIndex]));
                         break;
                     default :
-                        logger.warn("Cannot find service for: " + split[0]);
+                        logger.warn("Cannot find service for: " + split[serviceNameIndex]);
                         break;
                 }
                 line = fileReader.readLine();
