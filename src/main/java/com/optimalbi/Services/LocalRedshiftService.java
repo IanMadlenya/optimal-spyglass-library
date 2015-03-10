@@ -17,30 +17,12 @@
 package com.optimalbi.Services;
 
 import com.amazonaws.regions.Region;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatch;
-import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
-import com.amazonaws.services.cloudwatch.model.Datapoint;
-import com.amazonaws.services.cloudwatch.model.Dimension;
-import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsRequest;
-import com.amazonaws.services.cloudwatch.model.GetMetricStatisticsResult;
 import com.amazonaws.services.redshift.model.Cluster;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import org.timothygray.SimpleLog.*;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.Scene;
-import javafx.scene.chart.CategoryAxis;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.stage.Popup;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 
@@ -70,7 +52,7 @@ public class LocalRedshiftService extends AmazonService {
     }
 
     public String serviceName() {
-        return stringCap(thisCluster.getDBName());
+        return stringCap(thisCluster.getClusterIdentifier());
     }
 
     public String serviceSize() {
@@ -78,6 +60,11 @@ public class LocalRedshiftService extends AmazonService {
     }
 
     public double servicePrice() {
+        if(pricing != null){
+            if (pricing.containsKey(this.serviceSize())) {
+                return pricing.get(this.serviceSize());
+            }
+        }
         return 0;
     }
 

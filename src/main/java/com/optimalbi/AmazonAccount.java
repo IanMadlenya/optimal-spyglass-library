@@ -34,27 +34,27 @@ import com.optimalbi.Services.LocalEc2Service;
 import com.optimalbi.Services.LocalRDSService;
 import com.optimalbi.Services.LocalRedshiftService;
 import com.optimalbi.Services.Service;
-import org.timothygray.SimpleLog.*;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import org.timothygray.SimpleLog.Logger;
 
 import java.util.*;
 
 /**
- * Created by Timothy Gray on 30/10/2014.
- * Version: 0.0.2
+ * This creates a local representation of a AWS Account and its service
+ * @author Timothy Gray
  */
-public class AmazonAccount{
+public class AmazonAccount {
     private final AmazonCredentials credentials;
     private final List<Region> regions;
     private final Logger logger;
 
     private final BooleanProperty ready = new SimpleBooleanProperty(false);
+    private final IntegerProperty completed = new SimpleIntegerProperty(0);
     //File names
     private ServicePricing servicePricing;
-    private final IntegerProperty completed = new SimpleIntegerProperty(0);
     private boolean readyValue = false;
     private List<Service> services;
     //Statistics
@@ -62,18 +62,19 @@ public class AmazonAccount{
     private int runningServices = 0;
     private Map<String, Integer> runningCount;
 
-    public AmazonAccount(AmazonCredentials credentials, List<Region> regions, Logger logger) {
+    public AmazonAccount(AmazonCredentials credentials, List<Region> regions, Logger logger, ServicePricing pricingMap) {
         this.credentials = credentials;
         this.regions = regions;
         this.logger = logger;
-
+        if (pricingMap != null) {
+            servicePricing = pricingMap;
+        }
         runningCount = new HashMap<>();
     }
 
-    public void attachPricing(ServicePricing pricingMap){
-        this.servicePricing = pricingMap;
-    }
-
+    /**
+     * Starts the process of polling the account for AWS services
+     */
     public void startConfigure() {
         try {
             configure();
@@ -94,9 +95,9 @@ public class AmazonAccount{
 
     private void configure() throws AmazonClientException {
         services = new ArrayList<>();
-            if (getCredentials() == null) {
-                throw new AmazonClientException("No credentials provided");
-            }
+        if (getCredentials() == null) {
+            throw new AmazonClientException("No credentials provided");
+        }
     }
 
     private void populateEc2() throws AmazonClientException {
@@ -116,7 +117,7 @@ public class AmazonAccount{
 
                 for (Instance i : inst) {
                     Service temp = new LocalEc2Service(i.getInstanceId(), getCredentials(), region, ec2, getLogger());
-                    if(servicePricing != null){
+                    if (servicePricing != null) {
                         temp.attachPricing(servicePricing.getEc2Pricing());
                     }
                     services.add(temp);
@@ -125,7 +126,7 @@ public class AmazonAccount{
             } catch (AmazonClientException e) {
                 throw new AmazonClientException(region.getName() + " " + e.getMessage());
             }
-            completed.set(completed.get()+1);
+            completed.set(completed.get() + 1);
         }
 
     }
@@ -150,13 +151,13 @@ public class AmazonAccount{
                     getLogger().info("Redshift, Adding " + clusters.size() + " clusters from " + region.getName());
                     for (Cluster cluster : clusters) {
                         getLogger().info("Cluster: " + cluster.getClusterIdentifier());
-                        LocalRedshiftService temp = new LocalRedshiftService(cluster.getClusterIdentifier(), getCredentials(), region, cluster, getLogger());
-                        if(servicePricing != null){
+                        LocalRedshiftService temp = new LocalRedshiftService(cluster.getDBName(), getCredentials(), region, cluster, getLogger());
+                        if (servicePricing != null) {
                             temp.attachPricing(servicePricing.getRedshiftPricing());
                         }
                         services.add(temp);
                     }
-                }else{
+                } else {
                     getLogger().info("Redshift, NOPE from " + region.getName());
                 }
             } catch (AmazonClientException e) {
@@ -169,7 +170,7 @@ public class AmazonAccount{
     private void populateRDS() throws AmazonClientException {
         for (Region region : getRegions()) {
             try {
-                if(region.isServiceSupported(ServiceAbbreviations.RDS)) {
+                if (region.isServiceSupported(ServiceAbbreviations.RDS)) {
                     AmazonRDSClient rds = new AmazonRDSClient(getCredentials().getCredentials());
                     rds.setRegion(region);
 
@@ -178,22 +179,22 @@ public class AmazonAccount{
 
                     getLogger().info("RDS, Adding " + instances.size() + " instances from " + region.getName());
 
-                    for(DBInstance i : instances){
-                        LocalRDSService temp = new LocalRDSService(i.getDBInstanceIdentifier(), getCredentials(), region, i, getLogger());
-                        if(servicePricing != null){
-                            if(servicePricing.getRDSPricing() != null) {
+                    for (DBInstance i : instances) {
+                        LocalRDSService temp = new LocalRDSService(i.getDBName(), getCredentials(), region, i, getLogger());
+                        if (servicePricing != null) {
+                            if (servicePricing.getRDSPricing() != null) {
                                 temp.attachPricing(servicePricing.getRDSPricing());
                             }
                         }
+                        services.add(temp);
                     }
-                }else {
+                } else {
                     getLogger().info("RDS, NOPE from " + region.getName());
                 }
             } catch (AmazonClientException e) {
                 throw new AmazonClientException(region.getName() + " " + e.getMessage());
             }
-            completed.set(completed.get()+1);
-
+            completed.set(completed.get() + 1);
         }
     }
 
@@ -235,43 +236,74 @@ public class AmazonAccount{
         runningCount.put("redshift", runningRedshift);
     }
 
+    /**
+     * This value will be set to ready when the account is fully populated
+     */
     public BooleanProperty getReady() {
         return ready;
     }
 
+    /**
+     * This value will be set to ready when the account is fully populated
+     */
     public boolean getReadyValue() {
         return readyValue;
     }
 
+    /**
+     * Returns a list of services attached to this account
+     */
     public List<Service> getServices() {
         return services;
     }
 
+    /**
+     * Returns the total number of services this account has
+     */
     public int getTotalServices() {
         return totalServices;
     }
 
+    /**
+     * Returns the total number of services in a running state
+     */
     public int getRunningServices() {
         return runningServices;
     }
 
+    /**
+     * Returns a map of running service count to service type
+     */
     public Map<String, Integer> getRunningCount() {
         return runningCount;
     }
 
+    /**
+     * Returns the number of polled regions at the current point in time.
+     * This is for use in progress bars and the like.
+     */
     public IntegerProperty getCompleted() {
         return completed;
     }
 
-    List<Region> getRegions(){
+    /**
+     * Returns a list of regions that this account is polling.
+     */
+    List<Region> getRegions() {
         return regions;
     }
 
-    Logger getLogger(){
+    /**
+     * Returns the SimpleLogger that this is using
+     */
+    Logger getLogger() {
         return this.logger;
     }
 
-    public AmazonCredentials getCredentials(){
+    /**
+     * Returns the AWS credentials used for this Account
+     */
+    public AmazonCredentials getCredentials() {
         return credentials;
     }
 }

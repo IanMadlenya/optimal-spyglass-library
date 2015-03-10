@@ -22,8 +22,8 @@ import org.timothygray.SimpleLog.*;
 import org.apache.commons.lang.Validate;
 
 /**
- * Created by Timothy Gray(timg) on 19/11/2014.
- * Version: 0.0.1
+ * This is a local representation of a AWS Service
+ * @author Timothy Gray
  */
 public abstract class AmazonService implements Service {
 
@@ -51,6 +51,9 @@ public abstract class AmazonService implements Service {
         return shortString;
     }
 
+    /**
+     * The id of this Service
+     */
     public String serviceID() {
         String testString = id;
         if (testString.length() > 21) {
@@ -61,8 +64,11 @@ public abstract class AmazonService implements Service {
     }
 
     public int compareTo(Service o) {
-        Validate.notNull(o,"Service was null");
-        return this.serviceName().compareTo(o.serviceName());
+        if(this.serviceName() == null){
+            return -1;
+        } else {
+            return this.serviceName().compareTo(o.serviceName());
+        }
     }
 
     AmazonCredentials getCredentials() {

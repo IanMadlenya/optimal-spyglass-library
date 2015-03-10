@@ -17,16 +17,14 @@
 package com.optimalbi.Services;
 
 import com.amazonaws.regions.Region;
+import com.amazonaws.services.rds.AmazonRDSClient;
 import com.amazonaws.services.rds.model.DBInstance;
+import com.amazonaws.services.rds.model.DescribeDBInstancesResult;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import org.timothygray.SimpleLog.*;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,11 +34,9 @@ import java.util.Map;
  */
 public class LocalRDSService extends AmazonService {
     private final Region region;
-    private final DBInstance thisService;
+    private DBInstance thisService;
     private VBox drawing = null;
     private Map<String, Double> pricing = null;
-
-
     private Label instanceState;
 
     public LocalRDSService(String id, AmazonCredentials credentials, Region region, DBInstance instance, Logger logger) {
@@ -50,7 +46,22 @@ public class LocalRDSService extends AmazonService {
     }
 
     public void refreshInstance() {
+        AmazonRDSClient rds = new AmazonRDSClient(getCredentials().getCredentials());
+        rds.setRegion(region);
 
+        DescribeDBInstancesResult result = rds.describeDBInstances();
+        List<DBInstance> instances = result.getDBInstances();
+        DBInstance tempInstance = null;
+        for(DBInstance d : instances){
+            if(d.getDBInstanceIdentifier().equalsIgnoreCase(thisService.getDBInstanceIdentifier())){
+                tempInstance = d;
+            }
+        }
+        if(tempInstance != null){
+            thisService = tempInstance;
+        } else {
+            logger.error("Failed to refresh " + this.serviceName());
+        }
     }
 
     public String serviceState() {
@@ -58,14 +69,19 @@ public class LocalRDSService extends AmazonService {
     }
 
     public String serviceName() {
-        return thisService.getDBName();
+        return thisService.getDBInstanceIdentifier();
     }
 
     public String serviceSize() {
-        return null;
+        return thisService.getDBInstanceClass();
     }
 
     public double servicePrice() {
+        if(pricing != null){
+            if (pricing.containsKey(this.serviceSize())) {
+                return pricing.get(this.serviceSize());
+            }
+        }
         return 0;
     }
 

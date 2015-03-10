@@ -17,27 +17,15 @@
 package com.optimalbi.Services;
 
 import com.amazonaws.regions.Region;
+import org.apache.commons.lang.Validate;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Timothy Gray(timg) on 25/11/2014.
  * Version: 0.0.2
  */
 public interface Service extends Comparable<Service>{
-
-    public static int buttonWidth = 190;
-    public static int buttonHeight = 20;
-    public static int serviceWidth = 260;
-    public static int serviceHeight = 205;
-    public static int labelWidth = serviceWidth/2;
-    public static int textWidth = serviceWidth - labelWidth;
-
-    @SuppressWarnings("SameReturnValue")
-    public static int serviceWidth(){
-        return serviceWidth;
-    }
 
     void refreshInstance();
 
@@ -59,6 +47,9 @@ public interface Service extends Comparable<Service>{
 
     public Map<String, Double> getPricing();
 
+    /**
+     * Returns a map of region names to their friendly titles
+     */
     public static Map<String,String> regionNames() {
         Map<String,String> regionNames = new HashMap<>();
         regionNames.put("ap-northeast-1","Asia Pacific (Tokyo)");
@@ -70,7 +61,30 @@ public interface Service extends Comparable<Service>{
         regionNames.put("us-east-1","US East (N. Virginia)");
         regionNames.put("us-west-1","US West (N. California)");
         regionNames.put("us-west-2","US West (Oregon)");
-
         return regionNames;
+    }
+
+    /**
+     * Returns a friendly title for a given region name
+     * @param regionId The AWS region id
+     */
+    public static String friendlyRegionName(String regionId){
+        Validate.notNull(regionId);
+        if(regionNames().containsKey(regionId)){
+            return regionId;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * A set of all titles that mean the service is currently in a running state
+     */
+    public static Set<String> runningTitles(){
+        Set<String> runningTitles = new HashSet<>();
+        runningTitles.add("running");
+        runningTitles.add("available");
+        runningTitles.add("creating");
+        return runningTitles;
     }
 }

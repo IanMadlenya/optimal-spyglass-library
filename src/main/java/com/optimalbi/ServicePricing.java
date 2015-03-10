@@ -11,8 +11,7 @@ import java.util.Map;
 
 /**
  * A class for taking provided pricing CSV and constructing a map of those prices
- * CSV should be in the format: Service.Name,Service.Size,Cost.Per.Hour
- * i.e. "EC2,t1.micro,0.027"
+ * CSV have the columns: Service.Name,Service.Size,Cost.Per.Hour
  */
 public class ServicePricing {
     private final File pricing;
@@ -24,6 +23,7 @@ public class ServicePricing {
         readPricing();
     }
 
+    @SuppressWarnings("ConstantConditions")
     private void readPricing() {
         pricingMap = new HashMap<>();
         pricingMap.put("EC2",new HashMap<>());
@@ -79,7 +79,6 @@ public class ServicePricing {
 
         } catch (IOException e) {
             logger.error("Failed to read " + pricing.getName() +" properly");
-            return;
         } finally {
             if (fileReader != null) {
                 try {
