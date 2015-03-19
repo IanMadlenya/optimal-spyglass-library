@@ -38,6 +38,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import org.apache.commons.lang.Validate;
 import org.timothygray.SimpleLog.Logger;
 
 import java.util.*;
@@ -54,7 +55,7 @@ public class AmazonAccount {
     private final BooleanProperty ready = new SimpleBooleanProperty(false);
     private final IntegerProperty completed = new SimpleIntegerProperty(0);
     //File names
-    private ServicePricing servicePricing;
+    private Map<Region,ServicePricing> servicePricings;
     private boolean readyValue = false;
     private List<Service> services;
     //Statistics
@@ -67,14 +68,14 @@ public class AmazonAccount {
      * @param credentials The AWS credentials this account will use to authenticate with the AWS Cloud
      * @param regions The regions this account is interested in
      * @param logger The SimpleLogger this will use for reporting
-     * @param servicePricing A optional object that describes the costs of various services
+     * @param servicePricings A optional object that describes the costs of various services
      */
-    public AmazonAccount(AmazonCredentials credentials, List<Region> regions, Logger logger, ServicePricing servicePricing) {
+    public AmazonAccount(AmazonCredentials credentials, List<Region> regions, Logger logger, Map<Region,ServicePricing> servicePricings) {
         this.credentials = credentials;
         this.regions = regions;
         this.logger = logger;
-        if (servicePricing != null) {
-            this.servicePricing = servicePricing;
+        if (servicePricings != null) {
+            this.servicePricings = servicePricings;
         }
         runningCount = new HashMap<>();
     }
@@ -124,8 +125,8 @@ public class AmazonAccount {
 
                 for (Instance i : inst) {
                     Service temp = new LocalEc2Service(i.getInstanceId(), getCredentials(), region, ec2, getLogger());
-                    if (servicePricing != null) {
-                        temp.attachPricing(servicePricing.getEc2Pricing());
+                    if (servicePricings != null && servicePricings.size()>0) {
+                        temp.attachPricing(servicePricings.get(region).getEc2Pricing());
                     }
                     services.add(temp);
                 }
@@ -159,8 +160,8 @@ public class AmazonAccount {
                     for (Cluster cluster : clusters) {
                         getLogger().info("Cluster: " + cluster.getClusterIdentifier());
                         LocalRedshiftService temp = new LocalRedshiftService(cluster.getDBName(), getCredentials(), region, cluster, getLogger());
-                        if (servicePricing != null) {
-                            temp.attachPricing(servicePricing.getRedshiftPricing());
+                        if (servicePricings != null && servicePricings.size()>0) {
+                            temp.attachPricing(servicePricings.get(region).getRedshiftPricing());
                         }
                         services.add(temp);
                     }
@@ -188,9 +189,9 @@ public class AmazonAccount {
 
                     for (DBInstance i : instances) {
                         LocalRDSService temp = new LocalRDSService(i.getDBName(), getCredentials(), region, i, getLogger());
-                        if (servicePricing != null) {
-                            if (servicePricing.getRDSPricing() != null) {
-                                temp.attachPricing(servicePricing.getRDSPricing());
+                        if (servicePricings != null && servicePricings.size()>0) {
+                            if (servicePricings.get(region).getRDSPricing() != null) {
+                                temp.attachPricing(servicePricings.get(region).getRDSPricing());
                             }
                         }
                         services.add(temp);
@@ -241,6 +242,11 @@ public class AmazonAccount {
         runningCount.put("ec2", runningEc2);
         runningCount.put("rds", runningRDS);
         runningCount.put("redshift", runningRedshift);
+    }
+
+    public ServicePricing getPricing(Region region){
+        Validate.notNull(region);
+        return servicePricings.get(region);
     }
 
     /**
