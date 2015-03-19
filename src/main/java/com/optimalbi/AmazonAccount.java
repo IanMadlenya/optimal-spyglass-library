@@ -62,12 +62,19 @@ public class AmazonAccount {
     private int runningServices = 0;
     private Map<String, Integer> runningCount;
 
-    public AmazonAccount(AmazonCredentials credentials, List<Region> regions, Logger logger, ServicePricing pricingMap) {
+    /**
+     * Amazon Account hold all the information needed to describe one account from many regions
+     * @param credentials The AWS credentials this account will use to authenticate with the AWS Cloud
+     * @param regions The regions this account is interested in
+     * @param logger The SimpleLogger this will use for reporting
+     * @param servicePricing A optional object that describes the costs of various services
+     */
+    public AmazonAccount(AmazonCredentials credentials, List<Region> regions, Logger logger, ServicePricing servicePricing) {
         this.credentials = credentials;
         this.regions = regions;
         this.logger = logger;
-        if (pricingMap != null) {
-            servicePricing = pricingMap;
+        if (servicePricing != null) {
+            this.servicePricing = servicePricing;
         }
         runningCount = new HashMap<>();
     }

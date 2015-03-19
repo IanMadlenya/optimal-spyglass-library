@@ -29,6 +29,12 @@ public class AmazonCredentials {
     private final String secretKey;
     private final AWSCredentials credentials;
 
+    /**
+     * This it the credentials that is used to authenticate with the AWS cloud
+     * @param accountName The name that describes this account
+     * @param accessKey The access key that is provided by the AWS IAM console
+     * @param secretKey The secret key that is provided by the AWS IAM console
+     */
     public AmazonCredentials(String accountName, String accessKey, String secretKey){
         this.accountName = accountName;
         this.accessKey = accessKey;
@@ -36,12 +42,28 @@ public class AmazonCredentials {
         this.credentials = new BasicAWSCredentials(accessKey,secretKey);
     }
 
+    /**
+     * The name that is used to describe this account to the user
+     * @return The name of this account
+     */
     public String getAccountName(){return accountName;}
 
+    /**
+     * This access key that is used for authentication
+     * @return The unencrypted access key
+     */
     public String getAccessKey(){return accessKey;}
 
+    /**
+     * The secret key that is used for authentication
+     * @return The unencrypted access key
+     */
     public String getSecretKey(){return secretKey;}
 
+    /**
+     * The AWS credentials object as provided by the AWS Java API.
+     * @return The AWS credentials object as provided by the AWS Java API.
+     */
     public AWSCredentials getCredentials(){return credentials;}
 
 }

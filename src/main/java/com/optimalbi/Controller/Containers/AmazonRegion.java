@@ -26,15 +26,31 @@ public class AmazonRegion {
     private final Region region;
     private boolean active;
 
+    /**
+     * A amazon region that is or is not flagged as one we are interested at this moment
+     * @param region The non-null AWS region that is described by this object
+     * @param active The non-null flag that describes if we are interested in this region at this point in time
+     */
     public AmazonRegion(Region region, boolean active){
         this.region = region;
         this.active = active;
     }
 
+    /**
+     * The AWS region
+     * @return The AWS region from this object
+     */
     public Region getRegion(){return region;}
 
+    /**
+     * The active flag
+     * @return A boolean that is true if and only if we are interested in this region.
+     */
     public boolean getActive(){return active;}
 
+    /**
+     * Changes the active flag to the opposite
+     */
     public void toggleActive(){
         active = !active;
     }

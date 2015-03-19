@@ -27,22 +27,57 @@ import java.util.*;
  */
 public interface Service extends Comparable<Service>{
 
+    /**
+     * Causes this instance to update is status from the AWS cloud
+     */
     void refreshInstance();
 
+    /**
+     * The id of this service
+     * @return The id
+     */
     String serviceID();
 
+    /**
+     * The services current state
+     * @return The state
+     */
     String serviceState();
 
+    /**
+     * The services type, i.e EC2
+     * @return The type
+     */
     String serviceType();
 
+    /**
+     * The name as found under the tag Name in the AWS cloud
+     * @return The name of this service
+     */
     String serviceName();
 
+    /**
+     * The size as related to cost of this service
+     * @return The size of this service
+     */
     String serviceSize();
 
+    /**
+     * If the pricing information has been attached this will return the costs of this service, otherwise it returns 0
+     * @return The cost of this service
+     */
     double servicePrice();
 
+    /**
+     * This region this service is in
+     * @return The AWS region of this service
+     */
     Region serviceRegion();
 
+    /**
+     * Attaches a pricing information map to calculate costs of this service
+     * @param pricing The map of service size to cost
+     */
     void attachPricing(Map<String, Double> pricing);
 
     public Map<String, Double> getPricing();
@@ -78,7 +113,7 @@ public interface Service extends Comparable<Service>{
     }
 
     /**
-     * A set of all titles that mean the service is currently in a running state
+     * A set of titles that mean the service is currently in a state that incurs cost
      */
     public static Set<String> runningTitles(){
         Set<String> runningTitles = new HashSet<>();

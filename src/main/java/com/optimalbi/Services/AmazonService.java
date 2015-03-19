@@ -52,7 +52,7 @@ public abstract class AmazonService implements Service {
     }
 
     /**
-     * The id of this Service
+     * {@inheritDoc}
      */
     public String serviceID() {
         String testString = id;
@@ -71,6 +71,9 @@ public abstract class AmazonService implements Service {
         }
     }
 
+    /*
+     * {@inheritDoc}
+     */
     AmazonCredentials getCredentials() {
         return credentials;
     }

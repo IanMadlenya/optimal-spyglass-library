@@ -41,7 +41,6 @@ public class LocalEc2Service extends AmazonService implements Comparable<Service
     private Map<String, Double> pricing = null;
 
     //Global Main Components
-    private Label instanceState;
     private Timer timer = new Timer();
 
     public LocalEc2Service(String id, AmazonCredentials credentials, Region region, AmazonEC2 amazonEC2, Logger logger) {
@@ -136,19 +135,6 @@ public class LocalEc2Service extends AmazonService implements Comparable<Service
                         logger.error("Failed to sleep thread in " + thisInstance.getInstanceId());
                     }
                     refreshInstance();
-                    if ((!intermediateState.equals(thisInstance.getState().getName()))) {
-                        intermediateState = thisInstance.getState().getName();
-                        Platform.runLater(() -> {
-                            instanceState.setText(serviceState());
-                            if (instanceState.getText().equalsIgnoreCase("stopped")) {
-                                instanceState.setTextFill(Color.RED);
-                            } else if (instanceState.getText().equalsIgnoreCase("running")) {
-                                instanceState.setTextFill(Color.GREEN);
-                            } else {
-                                instanceState.setTextFill(Color.ORANGERED);
-                            }
-                        });
-                    }
                     timeout++;
                     logger.debug("Waiting for: " + thisInstance.getState().getName() + "(" + intermediateState + ")" + " to become: " + oldState);
                     if (timeout > 100) break; //Timeout condition
