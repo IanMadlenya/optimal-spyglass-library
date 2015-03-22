@@ -36,7 +36,6 @@ import java.util.*;
 public class LocalEc2Service extends AmazonService implements Comparable<Service> {
     private Instance thisInstance;
     private final AmazonEC2 amazonEC2;
-    private VBox drawing = null;
     private final Region region;
     private Map<String, Double> pricing = null;
 
