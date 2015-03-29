@@ -18,6 +18,7 @@ package com.optimalbi.Services;
 
 import com.amazonaws.regions.Region;
 import com.amazonaws.services.redshift.model.Cluster;
+import com.amazonaws.services.redshift.model.Tag;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import org.timothygray.SimpleLog.*;
 import javafx.scene.control.Label;
@@ -70,6 +71,15 @@ public class LocalRedshiftService extends AmazonService {
 
     public Region serviceRegion() {
         return region;
+    }
+
+    public Map<String,String> getTags(){
+        List<Tag> tags = thisCluster.getTags();
+        Map<String,String> tagMap = new HashMap<>();
+        for(Tag t : tags){
+            tagMap.put(t.getKey(),t.getValue());
+        }
+        return tagMap;
     }
 
     public void attachPricing(Map<String, Double> pricing) {

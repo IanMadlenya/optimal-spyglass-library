@@ -28,6 +28,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by Timothy Gray on 13/11/2014.
@@ -92,7 +93,7 @@ public class LocalEc2Service extends AmazonService implements Comparable<Service
     }
 
     public double servicePrice() {
-        if(pricing != null){
+        if (pricing != null) {
             if (pricing.containsKey(this.serviceSize())) {
                 return pricing.get(this.serviceSize());
             }
@@ -147,8 +148,18 @@ public class LocalEc2Service extends AmazonService implements Comparable<Service
         this.pricing = pricing;
     }
 
-    public Map<String, Double> getPricing(){
+    public Map<String, Double> getPricing() {
         return pricing;
+    }
+
+    public Map<String,String> getTags() {
+        DescribeTagsResult tags = amazonEC2.describeTags();
+        List<TagDescription> tagDescriptionList = tags.getTags();
+        Map<String,String> tagMap = new HashMap<>();
+        for(TagDescription t : tagDescriptionList){
+            tagMap.put(t.getKey(),t.getValue());
+        }
+        return tagMap;
     }
 
     private void addShutdownHook() {

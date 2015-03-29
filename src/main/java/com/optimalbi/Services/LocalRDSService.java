@@ -17,16 +17,20 @@
 package com.optimalbi.Services;
 
 import com.amazonaws.regions.Region;
+import com.amazonaws.services.ec2.model.DescribeTagsResult;
+import com.amazonaws.services.ec2.model.TagDescription;
 import com.amazonaws.services.rds.AmazonRDSClient;
-import com.amazonaws.services.rds.model.DBInstance;
-import com.amazonaws.services.rds.model.DescribeDBInstancesResult;
+import com.amazonaws.services.rds.model.*;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import org.timothygray.SimpleLog.*;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by Timothy Gray(timg) on 3/12/2014.
@@ -83,6 +87,20 @@ public class LocalRDSService extends AmazonService {
             }
         }
         return 0;
+    }
+
+    public Map<String,String> getTags() {
+        AmazonRDSClient rds = new AmazonRDSClient(getCredentials().getCredentials());
+        ListTagsForResourceRequest request = new ListTagsForResourceRequest();
+        request.setResourceName(thisService.getDbiResourceId());
+        ListTagsForResourceResult result = rds.listTagsForResource(request);
+
+        List<Tag> tagList = result.getTagList();
+        Map<String,String> tagMap = new HashMap<>();
+        for(Tag t : tagList){
+            tagMap.put(t.getKey(),t.getValue());
+        }
+        return tagMap;
     }
 
     public Region serviceRegion() {

@@ -80,7 +80,17 @@ public interface Service extends Comparable<Service>{
      */
     void attachPricing(Map<String, Double> pricing);
 
+    /**
+     * Returns a map of service class to cost for this region (as defined previously)
+     * @return Map of Service Class, Cost
+     */
     public Map<String, Double> getPricing();
+
+    /**
+     * Returns a list of the tags the Service has been tagged with in the AWS Console
+     * @return List of string tags
+     */
+    public Map<String,String> getTags();
 
     /**
      * Returns a map of region names to their friendly titles
