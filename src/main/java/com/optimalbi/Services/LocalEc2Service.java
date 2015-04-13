@@ -73,7 +73,7 @@ public class LocalEc2Service extends AmazonService implements Comparable<Service
     }
 
     public String serviceType() {
-        return "ec2";
+        return "EC2";
     }
 
     public String serviceName() {
@@ -153,10 +153,9 @@ public class LocalEc2Service extends AmazonService implements Comparable<Service
     }
 
     public Map<String,String> getTags() {
-        DescribeTagsResult tags = amazonEC2.describeTags();
-        List<TagDescription> tagDescriptionList = tags.getTags();
+        List<Tag> tags = thisInstance.getTags();
         Map<String,String> tagMap = new HashMap<>();
-        for(TagDescription t : tagDescriptionList){
+        for(Tag t : tags){
             tagMap.put(t.getKey(),t.getValue());
         }
         return tagMap;

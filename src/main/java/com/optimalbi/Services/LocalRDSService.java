@@ -19,6 +19,7 @@ package com.optimalbi.Services;
 import com.amazonaws.regions.Region;
 import com.amazonaws.services.ec2.model.DescribeTagsResult;
 import com.amazonaws.services.ec2.model.TagDescription;
+import com.amazonaws.services.rds.AmazonRDS;
 import com.amazonaws.services.rds.AmazonRDSClient;
 import com.amazonaws.services.rds.model.*;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
@@ -26,10 +27,7 @@ import org.timothygray.SimpleLog.*;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -39,9 +37,7 @@ import java.util.stream.Collectors;
 public class LocalRDSService extends AmazonService {
     private final Region region;
     private DBInstance thisService;
-    private VBox drawing = null;
     private Map<String, Double> pricing = null;
-    private Label instanceState;
 
     public LocalRDSService(String id, AmazonCredentials credentials, Region region, DBInstance instance, Logger logger) {
         super(id, credentials, logger);
@@ -90,12 +86,11 @@ public class LocalRDSService extends AmazonService {
     }
 
     public Map<String,String> getTags() {
-        AmazonRDSClient rds = new AmazonRDSClient(getCredentials().getCredentials());
-        ListTagsForResourceRequest request = new ListTagsForResourceRequest();
-        request.setResourceName(thisService.getDbiResourceId());
-        ListTagsForResourceResult result = rds.listTagsForResource(request);
+        AmazonRDS rds = new AmazonRDSClient(this.getCredentials().getCredentials());
+        String arn = thisService.getTdeCredentialArn();
+        ListTagsForResourceResult tagsList = rds.listTagsForResource(new ListTagsForResourceRequest().withResourceName(arn));
 
-        List<Tag> tagList = result.getTagList();
+        List<Tag> tagList = tagsList.getTagList();
         Map<String,String> tagMap = new HashMap<>();
         for(Tag t : tagList){
             tagMap.put(t.getKey(),t.getValue());

@@ -188,7 +188,12 @@ public class AmazonAccount {
                     getLogger().info("RDS, Adding " + instances.size() + " instances from " + region.getName());
 
                     for (DBInstance i : instances) {
-                        LocalRDSService temp = new LocalRDSService(i.getDBName(), getCredentials(), region, i, getLogger());
+                        LocalRDSService temp;
+                        if(i.getDBName()!=null) {
+                            temp = new LocalRDSService(i.getDBName(), getCredentials(), region, i, getLogger());
+                        } else {
+                            temp = new LocalRDSService(i.getDBInstanceIdentifier(), getCredentials(), region, i, getLogger());
+                        }
                         if (servicePricings != null && servicePricings.size()>0) {
                             if (servicePricings.get(region).getRDSPricing() != null) {
                                 temp.attachPricing(servicePricings.get(region).getRDSPricing());
