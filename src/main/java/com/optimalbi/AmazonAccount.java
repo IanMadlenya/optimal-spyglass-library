@@ -19,6 +19,13 @@ package com.optimalbi;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.ServiceAbbreviations;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.document.TableCollection;
+import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
+import com.amazonaws.services.dynamodbv2.model.TableDescription;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.Instance;
@@ -30,10 +37,7 @@ import com.amazonaws.services.redshift.AmazonRedshiftClient;
 import com.amazonaws.services.redshift.model.Cluster;
 import com.amazonaws.services.redshift.model.DescribeClustersResult;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
-import com.optimalbi.Services.LocalEc2Service;
-import com.optimalbi.Services.LocalRDSService;
-import com.optimalbi.Services.LocalRedshiftService;
-import com.optimalbi.Services.Service;
+import com.optimalbi.Services.*;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -42,6 +46,7 @@ import org.apache.commons.lang.Validate;
 import org.timothygray.SimpleLog.Logger;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * This creates a local representation of a AWS Account and its service
@@ -91,6 +96,7 @@ public class AmazonAccount {
                 populateRedshift();
                 populateRDS();
                 populateStatistics();
+                populateDynamoDB();
             }
         } catch (AmazonClientException e) {
             getLogger().error("Error in starting service: " + e.getMessage());
@@ -208,6 +214,23 @@ public class AmazonAccount {
                 throw new AmazonClientException(region.getName() + " " + e.getMessage());
             }
             completed.set(completed.get() + 1);
+        }
+    }
+
+    private void populateDynamoDB() throws AmazonClientException{
+        for(Region region : getRegions()){
+            if(region.isServiceSupported(ServiceAbbreviations.Dynamodb)){
+                AmazonDynamoDBClient DDB = new AmazonDynamoDBClient(credentials.getCredentials());
+                DDB.setRegion(region);
+                DynamoDB dynamoDB = new DynamoDB(DDB);
+                TableCollection<ListTablesResult> tables = dynamoDB.listTables();
+                tables.forEach(new Consumer<Table>() {
+                    @Override
+                    public void accept(Table table) {
+                        services.add(new LocalDynamoDBService(table.getTableName(),credentials,region,table.describe(),logger));
+                    }
+                });
+            }
         }
     }
 
