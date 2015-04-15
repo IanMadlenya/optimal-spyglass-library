@@ -130,6 +130,7 @@ public interface Service extends Comparable<Service>{
         runningTitles.add("running");
         runningTitles.add("available");
         runningTitles.add("creating");
+        runningTitles.add("active");
         return runningTitles;
     }
 }

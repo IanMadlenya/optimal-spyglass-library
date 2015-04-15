@@ -57,7 +57,7 @@ public class LocalDynamoDBService extends AmazonService implements Comparable<Se
 
     @Override
     public String serviceSize() {
-        return String.valueOf(Long.max(thisInstance.getProvisionedThroughput().getReadCapacityUnits(), thisInstance.getProvisionedThroughput().getWriteCapacityUnits()));
+        return String.format("Read: %d Write: %d",thisInstance.getProvisionedThroughput().getReadCapacityUnits(),thisInstance.getProvisionedThroughput().getWriteCapacityUnits());
     }
 
     @Override
