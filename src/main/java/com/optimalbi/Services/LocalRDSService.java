@@ -23,7 +23,7 @@ import com.amazonaws.services.rds.AmazonRDS;
 import com.amazonaws.services.rds.AmazonRDSClient;
 import com.amazonaws.services.rds.model.*;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
-import org.timothygray.SimpleLog.*;
+import com.optimalbi.SimpleLog.*;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 
@@ -60,7 +60,7 @@ public class LocalRDSService extends AmazonService {
         if(tempInstance != null){
             thisService = tempInstance;
         } else {
-            logger.error("Failed to refresh " + this.serviceName());
+            getLogger().error("Failed to refresh " + this.serviceName());
         }
     }
 

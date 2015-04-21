@@ -1,4 +1,4 @@
-package org.timothygray.SimpleLog;
+package com.optimalbi.SimpleLog;
 
 /*
    Copyright 2015 OptimalBI
@@ -18,33 +18,33 @@ package org.timothygray.SimpleLog;
 
 
 import javafx.application.Platform;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 
 import java.io.File;
 
 /**
- * Logs output to a JavaFX TextArea and a file
+ * Logs output to TextField and file
  */
-public class GuiLogger implements Logger {
-    private final TextArea textArea;
+public class TextFieldLogger implements Logger {
+    private final TextField textField;
     private final FileLogger fileLogger;
     private final Boolean hasLogFile;
 
-    public GuiLogger(File logFile, TextArea textArea) {
+    public TextFieldLogger(File logFile, TextField textField) {
         fileLogger = new FileLogger(logFile);
-        this.textArea = textArea;
+        this.textField = textField;
         hasLogFile = true;
     }
 
-    public GuiLogger(TextArea textArea) {
-        this.textArea = textArea;
+    public TextFieldLogger(TextField textField) {
+        this.textField = textField;
         fileLogger = null;
         hasLogFile = false;
     }
 
-    public GuiLogger(File logFile, TextArea textArea, logType loggerLevel) {
+    public TextFieldLogger(File logFile, TextField textField, logType loggerLevel) {
         fileLogger = new FileLogger(logFile);
-        this.textArea = textArea;
+        this.textField = textField;
         hasLogFile = true;
     }
 
@@ -92,7 +92,7 @@ public class GuiLogger implements Logger {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
-                textArea.appendText("\n"+message);
+                textField.setText(message);
             }
         });
     }

@@ -18,14 +18,12 @@ package com.optimalbi;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.regions.ServiceAbbreviations;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
-import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.document.TableCollection;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
-import com.amazonaws.services.dynamodbv2.model.TableDescription;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.Instance;
@@ -36,6 +34,8 @@ import com.amazonaws.services.rds.model.DescribeDBInstancesResult;
 import com.amazonaws.services.redshift.AmazonRedshiftClient;
 import com.amazonaws.services.redshift.model.Cluster;
 import com.amazonaws.services.redshift.model.DescribeClustersResult;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.Bucket;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
 import com.optimalbi.Services.*;
 import javafx.beans.property.BooleanProperty;
@@ -43,8 +43,7 @@ import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import org.apache.commons.lang.Validate;
-import org.timothygray.SimpleLog.Logger;
-
+import com.optimalbi.SimpleLog.*;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -62,7 +61,7 @@ public class AmazonAccount {
     //File names
     private Map<Region,ServicePricing> servicePricings;
     private boolean readyValue = false;
-    private List<Service> services;
+    private Set<Service> services;
     //Statistics
     private int totalServices = 0;
     private int runningServices = 0;
@@ -97,6 +96,7 @@ public class AmazonAccount {
                 populateRDS();
                 populateStatistics();
                 populateDynamoDB();
+                populateS3();
             }
         } catch (AmazonClientException e) {
             getLogger().error("Error in starting service: " + e.getMessage());
@@ -108,7 +108,7 @@ public class AmazonAccount {
     }
 
     private void configure() throws AmazonClientException {
-        services = new ArrayList<>();
+        services = new HashSet<>();
         if (getCredentials() == null) {
             throw new AmazonClientException("No credentials provided");
         }
@@ -218,20 +218,23 @@ public class AmazonAccount {
     }
 
     private void populateDynamoDB() throws AmazonClientException{
-        for(Region region : getRegions()){
-            if(region.isServiceSupported(ServiceAbbreviations.Dynamodb)){
-                AmazonDynamoDBClient DDB = new AmazonDynamoDBClient(credentials.getCredentials());
-                DDB.setRegion(region);
-                DynamoDB dynamoDB = new DynamoDB(DDB);
-                TableCollection<ListTablesResult> tables = dynamoDB.listTables();
-                tables.forEach(new Consumer<Table>() {
-                    @Override
-                    public void accept(Table table) {
-                        services.add(new LocalDynamoDBService(table.getTableName(),credentials,region,table.describe(),logger));
-                    }
-                });
+        getRegions().stream().filter(region -> region.isServiceSupported(ServiceAbbreviations.Dynamodb)).forEach(region -> {
+            AmazonDynamoDBClient DDB = new AmazonDynamoDBClient(credentials.getCredentials());
+            DDB.setRegion(region);
+            DynamoDB dynamoDB = new DynamoDB(DDB);
+            TableCollection<ListTablesResult> tables = dynamoDB.listTables();
+            tables.forEach(table -> services.add(new LocalDynamoDBService(table.getTableName(), credentials, region, table.describe(), logger)));
+        });
+    }
+
+    private void populateS3() throws AmazonClientException{
+            AmazonS3Client client = new AmazonS3Client(credentials.getCredentials());
+            client.setRegion(regions.get(0));
+            List<Bucket> buckets = client.listBuckets();
+            for (Bucket bucket : buckets) {
+                Service temp = new LocalS3Service(bucket.getName(),credentials,regions.get(0),bucket,logger);
+                services.add(temp);
             }
-        }
     }
 
     private void populateStatistics() {
@@ -244,6 +247,8 @@ public class AmazonAccount {
         int runningEc2 = 0;
         int runningRDS = 0;
         int runningRedshift = 0;
+        int runningS3 = 0;
+        int runningDDB = 0;
 
         for (Service s : services) {
             switch (s.serviceType().toLowerCase()) {
@@ -265,11 +270,25 @@ public class AmazonAccount {
                         runningServices++;
                     }
                     break;
+                case "s3":
+                    if (s.serviceState().toLowerCase().equals("active")) {
+                        runningS3++;
+                        runningServices++;
+                    }
+                    break;
+                case "dynamodb":
+                    if (s.serviceState().toLowerCase().equals("active")) {
+                        runningDDB++;
+                        runningServices++;
+                    }
+                    break;
             }
         }
         runningCount.put("ec2", runningEc2);
         runningCount.put("rds", runningRDS);
         runningCount.put("redshift", runningRedshift);
+        runningCount.put("dynamodb",runningDDB);
+        runningCount.put("s3",runningS3);
     }
 
     public ServicePricing getPricing(Region region){
@@ -294,7 +313,7 @@ public class AmazonAccount {
     /**
      * Returns a list of services attached to this account
      */
-    public List<Service> getServices() {
+    public Set<Service> getServices() {
         return services;
     }
 

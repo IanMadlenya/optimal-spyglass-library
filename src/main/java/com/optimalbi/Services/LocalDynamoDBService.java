@@ -1,15 +1,14 @@
 package com.optimalbi.Services;
 
 import com.amazonaws.regions.Region;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.document.TableCollection;
 import com.amazonaws.services.dynamodbv2.model.ListTablesResult;
 import com.amazonaws.services.dynamodbv2.model.TableDescription;
-import com.amazonaws.services.ec2.AmazonEC2;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
-import org.timothygray.SimpleLog.Logger;
+import com.optimalbi.SimpleLog.Logger;
 
 import java.util.Collections;
 import java.util.Map;
@@ -28,7 +27,7 @@ public class LocalDynamoDBService extends AmazonService implements Comparable<Se
 
 
     public LocalDynamoDBService(String id, AmazonCredentials credentials, Region region, TableDescription thisInstance, Logger logger) {
-        super(id, credentials, logger);
+        super(id, credentials,logger);
         this.region = region;
         this.thisInstance = thisInstance;
         refreshInstance();
@@ -37,7 +36,15 @@ public class LocalDynamoDBService extends AmazonService implements Comparable<Se
 
     @Override
     public void refreshInstance() {
-        //No refresh for DynamoDB
+        AmazonDynamoDBClient DDB = new AmazonDynamoDBClient(getCredentials().getCredentials());
+        DDB.setRegion(region);
+        DynamoDB dynamoDB = new DynamoDB(DDB);
+        TableCollection<ListTablesResult> tables = dynamoDB.listTables(thisInstance.getTableName());
+        for (Table table : tables) {
+            if(table.describe().getTableName().equals(thisInstance.getTableName())){
+                thisInstance = table.describe();
+            }
+        }
     }
 
     @Override
@@ -57,7 +64,25 @@ public class LocalDynamoDBService extends AmazonService implements Comparable<Se
 
     @Override
     public String serviceSize() {
-        return String.format("Read: %d Write: %d",thisInstance.getProvisionedThroughput().getReadCapacityUnits(),thisInstance.getProvisionedThroughput().getWriteCapacityUnits());
+        double gbSize = thisInstance.getTableSizeBytes();
+        String retString = " B";
+        if(gbSize > 1024){
+            gbSize = gbSize / 1024;
+            retString = " KB";
+        }
+        if(gbSize > 1024){
+            gbSize = gbSize / 1024;
+            retString = " MB";
+        }
+        if(gbSize > 1024){
+            gbSize = gbSize / 1024;
+            retString = " GB";
+        }
+        return gbSize + retString;
+    }
+
+    public String serviceRate(){
+        return String.format("Read: %d \nWrite: %d",thisInstance.getProvisionedThroughput().getReadCapacityUnits(),thisInstance.getProvisionedThroughput().getWriteCapacityUnits());
     }
 
     @Override

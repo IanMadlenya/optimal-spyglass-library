@@ -20,7 +20,7 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.services.redshift.model.Cluster;
 import com.amazonaws.services.redshift.model.Tag;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
-import org.timothygray.SimpleLog.*;
+import com.optimalbi.SimpleLog.*;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 

@@ -1,4 +1,5 @@
-package org.timothygray.SimpleLog;
+package com.optimalbi.SimpleLog;
+
 
 /*
    Copyright 2015 OptimalBI
@@ -16,17 +17,11 @@ package org.timothygray.SimpleLog;
    limitations under the License.
  */
 
-import java.io.File;
 
 /**
- * Logs output to file and console
+ * Logger for testing purposes
  */
-public class ConsoleLogger implements Logger {
-    private final FileLogger fileLogger;
-
-    public ConsoleLogger(File logFile) {
-        fileLogger = new FileLogger(logFile);
-    }
+public class TestLogger implements Logger {
 
     public void debug(String message) {
         logTo(message, logType.DEBUG);
@@ -44,31 +39,12 @@ public class ConsoleLogger implements Logger {
         logTo(message, logType.INFO);
     }
 
-    public void resetLogFile(){
-        fileLogger.resetLogFile();
-    }
-
     private void logTo(String message, logType l) {
-        switch (l) {
-            case DEBUG:
-                fileLogger.debug(message);
-                break;
-            case INFO:
-                fileLogger.info(message);
-                System.out.println(message);
-                break;
-            case WARN:
-                fileLogger.warn(message);
-                write(message, l);
-                break;
-            case ERROR:
-                fileLogger.error(message);
-                write(message, l);
-                break;
-        }
+        write(message, l);
     }
 
     private void write(String text, logType logType) {
         System.out.println("[" + logType + "]: " + text);
     }
+
 }

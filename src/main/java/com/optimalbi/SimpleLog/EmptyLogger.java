@@ -1,5 +1,4 @@
-package org.timothygray.SimpleLog;
-
+package com.optimalbi.SimpleLog;
 
 /*
    Copyright 2015 OptimalBI
@@ -19,32 +18,22 @@ package org.timothygray.SimpleLog;
 
 
 /**
- * Logger for testing purposes
+ * Does nothing with log input, for null errors only.
  */
-public class TestLogger implements Logger {
-
+public class EmptyLogger implements Logger {
     public void debug(String message) {
-        logTo(message, logType.DEBUG);
+
     }
 
     public void warn(String message) {
-        logTo(message, logType.WARN);
+
     }
 
     public void error(String message) {
-        logTo(message, logType.ERROR);
+
     }
 
     public void info(String message) {
-        logTo(message, logType.INFO);
-    }
 
-    private void logTo(String message, logType l) {
-        write(message, l);
     }
-
-    private void write(String text, logType logType) {
-        System.out.println("[" + logType + "]: " + text);
-    }
-
 }

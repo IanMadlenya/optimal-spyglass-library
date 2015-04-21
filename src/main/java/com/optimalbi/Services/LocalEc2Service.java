@@ -21,7 +21,7 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.*;
 import com.optimalbi.Controller.Containers.AmazonCredentials;
-import org.timothygray.SimpleLog.*;
+import com.optimalbi.SimpleLog.*;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
@@ -62,7 +62,7 @@ public class LocalEc2Service extends AmazonService implements Comparable<Service
             inst.addAll(reservation.getInstances());
         }
         if (inst.size() > 1) {
-            logger.error("Error in drawing instance " + this.serviceID());
+            getLogger().error("Error in drawing instance " + this.serviceID());
             throw new AmazonClientException(this.serviceID() + " failed to draw");
         }
         thisInstance = inst.get(0);
@@ -106,7 +106,7 @@ public class LocalEc2Service extends AmazonService implements Comparable<Service
     }
 
     public void startService() {
-        logger.info("Instance \"Started\"");
+        getLogger().info("Instance \"Started\"");
         List<String> instanceId = new ArrayList<>();
         instanceId.add(this.serviceID());
         amazonEC2.startInstances(new StartInstancesRequest(instanceId));
@@ -114,7 +114,7 @@ public class LocalEc2Service extends AmazonService implements Comparable<Service
     }
 
     public void stopService() {
-        logger.info("Instance \"Stopped\"");
+        getLogger().info("Instance \"Stopped\"");
         List<String> instanceId = new ArrayList<>();
         instanceId.add(this.serviceID());
         amazonEC2.stopInstances(new StopInstancesRequest(instanceId));
@@ -125,18 +125,18 @@ public class LocalEc2Service extends AmazonService implements Comparable<Service
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                logger.debug("Running state change waiter for " + serviceID());
+                getLogger().debug("Running state change waiter for " + serviceID());
                 int timeout = 0;
                 String intermediateState = "";
                 while (!(thisInstance.getState().getName().equals(oldState))) {
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException e) {
-                        logger.error("Failed to sleep thread in " + thisInstance.getInstanceId());
+                        getLogger().error("Failed to sleep thread in " + thisInstance.getInstanceId());
                     }
                     refreshInstance();
                     timeout++;
-                    logger.debug("Waiting for: " + thisInstance.getState().getName() + "(" + intermediateState + ")" + " to become: " + oldState);
+                    getLogger().debug("Waiting for: " + thisInstance.getState().getName() + "(" + intermediateState + ")" + " to become: " + oldState);
                     if (timeout > 100) break; //Timeout condition
                 }
             }

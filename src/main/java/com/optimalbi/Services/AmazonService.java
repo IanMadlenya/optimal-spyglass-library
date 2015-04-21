@@ -18,8 +18,7 @@ package com.optimalbi.Services;
 
 
 import com.optimalbi.Controller.Containers.AmazonCredentials;
-import org.timothygray.SimpleLog.*;
-import org.apache.commons.lang.Validate;
+import com.optimalbi.SimpleLog.*;
 
 /**
  * This is a local representation of a AWS Service
@@ -27,14 +26,15 @@ import org.apache.commons.lang.Validate;
  */
 public abstract class AmazonService implements Service {
 
-    final Logger logger;
     private final AmazonCredentials credentials;
+    private final Logger logger;
     private final String id;
 
     AmazonService(String id, AmazonCredentials credentials, Logger logger) {
         this.id = id;
         this.credentials = credentials;
         this.logger = logger;
+
     }
 
     static String stringCap(String text) {
@@ -69,6 +69,10 @@ public abstract class AmazonService implements Service {
         } else {
             return this.serviceName().compareTo(o.serviceName());
         }
+    }
+
+    protected Logger getLogger(){
+        return logger;
     }
 
     /*
