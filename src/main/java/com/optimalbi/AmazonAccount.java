@@ -44,11 +44,13 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import org.apache.commons.lang.Validate;
 import com.optimalbi.SimpleLog.*;
+
 import java.util.*;
 import java.util.function.Consumer;
 
 /**
  * This creates a local representation of a AWS Account and its service
+ *
  * @author Timothy Gray
  */
 public class AmazonAccount {
@@ -59,7 +61,7 @@ public class AmazonAccount {
     private final BooleanProperty ready = new SimpleBooleanProperty(false);
     private final IntegerProperty completed = new SimpleIntegerProperty(0);
     //File names
-    private Map<Region,ServicePricing> servicePricings;
+    private Map<Region, ServicePricing> servicePricings;
     private boolean readyValue = false;
     private Set<Service> services;
     //Statistics
@@ -69,12 +71,13 @@ public class AmazonAccount {
 
     /**
      * Amazon Account hold all the information needed to describe one account from many regions
-     * @param credentials The AWS credentials this account will use to authenticate with the AWS Cloud
-     * @param regions The regions this account is interested in
-     * @param logger The SimpleLogger this will use for reporting
+     *
+     * @param credentials     The AWS credentials this account will use to authenticate with the AWS Cloud
+     * @param regions         The regions this account is interested in
+     * @param logger          The SimpleLogger this will use for reporting
      * @param servicePricings A optional object that describes the costs of various services
      */
-    public AmazonAccount(AmazonCredentials credentials, List<Region> regions, Logger logger, Map<Region,ServicePricing> servicePricings) {
+    public AmazonAccount(AmazonCredentials credentials, List<Region> regions, Logger logger, Map<Region, ServicePricing> servicePricings) {
         this.credentials = credentials;
         this.regions = regions;
         this.logger = logger;
@@ -94,17 +97,16 @@ public class AmazonAccount {
                 populateEc2();
                 populateRedshift();
                 populateRDS();
-                populateStatistics();
                 populateDynamoDB();
                 populateS3();
             }
         } catch (AmazonClientException e) {
             getLogger().error("Error in starting service: " + e.getMessage());
         } finally {
+            populateStatistics();
             readyValue = true;
             ready.setValue(true);
         }
-
     }
 
     private void configure() throws AmazonClientException {
@@ -131,7 +133,7 @@ public class AmazonAccount {
 
                 for (Instance i : inst) {
                     Service temp = new LocalEc2Service(i.getInstanceId(), getCredentials(), region, ec2, getLogger());
-                    if (servicePricings != null && servicePricings.size()>0) {
+                    if (servicePricings != null && servicePricings.size() > 0) {
                         temp.attachPricing(servicePricings.get(region).getEc2Pricing());
                     }
                     services.add(temp);
@@ -166,7 +168,7 @@ public class AmazonAccount {
                     for (Cluster cluster : clusters) {
                         getLogger().info("Cluster: " + cluster.getClusterIdentifier());
                         LocalRedshiftService temp = new LocalRedshiftService(cluster.getDBName(), getCredentials(), region, cluster, getLogger());
-                        if (servicePricings != null && servicePricings.size()>0) {
+                        if (servicePricings != null && servicePricings.size() > 0) {
                             temp.attachPricing(servicePricings.get(region).getRedshiftPricing());
                         }
                         services.add(temp);
@@ -195,12 +197,12 @@ public class AmazonAccount {
 
                     for (DBInstance i : instances) {
                         LocalRDSService temp;
-                        if(i.getDBName()!=null) {
+                        if (i.getDBName() != null) {
                             temp = new LocalRDSService(i.getDBName(), getCredentials(), region, i, getLogger());
                         } else {
                             temp = new LocalRDSService(i.getDBInstanceIdentifier(), getCredentials(), region, i, getLogger());
                         }
-                        if (servicePricings != null && servicePricings.size()>0) {
+                        if (servicePricings != null && servicePricings.size() > 0) {
                             if (servicePricings.get(region).getRDSPricing() != null) {
                                 temp.attachPricing(servicePricings.get(region).getRDSPricing());
                             }
@@ -217,7 +219,7 @@ public class AmazonAccount {
         }
     }
 
-    private void populateDynamoDB() throws AmazonClientException{
+    private void populateDynamoDB() throws AmazonClientException {
         getRegions().stream().filter(region -> region.isServiceSupported(ServiceAbbreviations.Dynamodb)).forEach(region -> {
             AmazonDynamoDBClient DDB = new AmazonDynamoDBClient(credentials.getCredentials());
             DDB.setRegion(region);
@@ -227,71 +229,41 @@ public class AmazonAccount {
         });
     }
 
-    private void populateS3() throws AmazonClientException{
-            AmazonS3Client client = new AmazonS3Client(credentials.getCredentials());
-            client.setRegion(regions.get(0));
-            List<Bucket> buckets = client.listBuckets();
-            for (Bucket bucket : buckets) {
-                Service temp = new LocalS3Service(bucket.getName(),credentials,regions.get(0),bucket,logger);
-                services.add(temp);
-            }
+    private void populateS3() throws AmazonClientException {
+        AmazonS3Client client = new AmazonS3Client(credentials.getCredentials());
+        client.setRegion(regions.get(0));
+        List<Bucket> buckets = client.listBuckets();
+        for (Bucket bucket : buckets) {
+            Service temp = new LocalS3Service(bucket.getName(), credentials, regions.get(0), bucket, logger);
+            services.add(temp);
+        }
     }
 
     private void populateStatistics() {
         runningCount = new HashMap<>();
-        runningCount.put("costs", 0);
-
         totalServices = services.size();
+        runningCount.put("costs", 0);
         runningServices = 0;
-
-        int runningEc2 = 0;
-        int runningRDS = 0;
-        int runningRedshift = 0;
-        int runningS3 = 0;
-        int runningDDB = 0;
+        runningCount.put("EC2", 0);
+        runningCount.put("RDS", 0);
+        runningCount.put("Redshift", 0);
+        runningCount.put("DynamoDB", 0);
+        runningCount.put("S3", 0);
 
         for (Service s : services) {
-            switch (s.serviceType().toLowerCase()) {
-                case "ec2":
-                    if (s.serviceState().equalsIgnoreCase("running")) {
-                        runningEc2++;
-                        runningServices++;
-                    }
-                    break;
-                case "rds":
-                    if (s.serviceState().toLowerCase().equals("available")) {
-                        runningRDS++;
-                        runningServices++;
-                    }
-                    break;
-                case "redshift":
-                    if (s.serviceState().toLowerCase().equals("available")) {
-                        runningRedshift++;
-                        runningServices++;
-                    }
-                    break;
-                case "s3":
-                    if (s.serviceState().toLowerCase().equals("active")) {
-                        runningS3++;
-                        runningServices++;
-                    }
-                    break;
-                case "dynamodb":
-                    if (s.serviceState().toLowerCase().equals("active")) {
-                        runningDDB++;
-                        runningServices++;
-                    }
-                    break;
+            if (Service.runningTitles().contains(s.serviceState().toLowerCase())) {
+                runningServices++;
+                if (runningCount.containsKey(s.serviceType())) {
+                    runningCount.put(s.serviceType(), runningCount.get(s.serviceType()) +1);
+                } else {
+                    System.err.println("Service type not found" + s.serviceType());
+                }
             }
         }
-        runningCount.put("ec2", runningEc2);
-        runningCount.put("rds", runningRDS);
-        runningCount.put("redshift", runningRedshift);
-        runningCount.put("dynamodb",runningDDB);
-        runningCount.put("s3",runningS3);
+
     }
 
-    public ServicePricing getPricing(Region region){
+    public ServicePricing getPricing(Region region) {
         Validate.notNull(region);
         return servicePricings.get(region);
     }

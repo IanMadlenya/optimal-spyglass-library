@@ -17,6 +17,7 @@
 package com.optimalbi.Services;
 
 import com.amazonaws.regions.Region;
+import javafx.beans.property.SimpleStringProperty;
 import org.apache.commons.lang.Validate;
 
 import java.util.*;
@@ -133,4 +134,14 @@ public interface Service extends Comparable<Service>{
         runningTitles.add("active");
         return runningTitles;
     }
+
+    static String getTagsString(Service s){
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> tag : s.getTags().entrySet()) {
+            sb.append(String.format("%s:%s, ", tag.getKey(), tag.getValue()));
+        }
+        return sb.toString();
+    }
+
+    public String getTagsString();
 }

@@ -38,11 +38,13 @@ public class LocalRDSService extends AmazonService {
     private final Region region;
     private DBInstance thisService;
     private Map<String, Double> pricing = null;
+    private String tagString;
 
     public LocalRDSService(String id, AmazonCredentials credentials, Region region, DBInstance instance, Logger logger) {
         super(id, credentials, logger);
         this.thisService = instance;
         this.region = region;
+        tagString = Service.getTagsString(this);
     }
 
     public void refreshInstance() {
@@ -96,6 +98,11 @@ public class LocalRDSService extends AmazonService {
             tagMap.put(t.getKey(),t.getValue());
         }
         return tagMap;
+    }
+
+    @Override
+    public String getTagsString() {
+        return tagString;
     }
 
     public Region serviceRegion() {

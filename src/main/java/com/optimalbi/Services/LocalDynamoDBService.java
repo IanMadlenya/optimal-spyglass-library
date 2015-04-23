@@ -24,6 +24,7 @@ public class LocalDynamoDBService extends AmazonService implements Comparable<Se
     //Global Main Components
     private Timer timer = new Timer();
     private Map<String, Double> pricing = null;
+    private String tagString;
 
 
     public LocalDynamoDBService(String id, AmazonCredentials credentials, Region region, TableDescription thisInstance, Logger logger) {
@@ -32,6 +33,7 @@ public class LocalDynamoDBService extends AmazonService implements Comparable<Se
         this.thisInstance = thisInstance;
         refreshInstance();
         addShutdownHook();
+        tagString = Service.getTagsString(this);
     }
 
     @Override
@@ -108,6 +110,11 @@ public class LocalDynamoDBService extends AmazonService implements Comparable<Se
     @Override
     public Map<String, String> getTags() {
         return Collections.emptyMap();
+    }
+
+    @Override
+    public String getTagsString() {
+        return tagString;
     }
 
     private void addShutdownHook() {

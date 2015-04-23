@@ -37,11 +37,13 @@ public class LocalRedshiftService extends AmazonService {
     private VBox drawing;
     private Label instanceState;
     private Map<String, Double> pricing = null;
+    private String tagString;
 
     public LocalRedshiftService(String id, AmazonCredentials credentials, Region region, Cluster cluster, Logger logger) {
         super(id, credentials, logger);
         this.region = region;
         this.thisCluster = cluster;
+        tagString = Service.getTagsString(this);
     }
 
     public String serviceState() {
@@ -80,6 +82,11 @@ public class LocalRedshiftService extends AmazonService {
             tagMap.put(t.getKey(),t.getValue());
         }
         return tagMap;
+    }
+
+    @Override
+    public String getTagsString() {
+        return tagString;
     }
 
     public void attachPricing(Map<String, Double> pricing) {

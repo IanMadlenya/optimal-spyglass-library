@@ -39,6 +39,7 @@ public class LocalEc2Service extends AmazonService implements Comparable<Service
     private final AmazonEC2 amazonEC2;
     private final Region region;
     private Map<String, Double> pricing = null;
+    private String tagString;
 
     //Global Main Components
     private Timer timer = new Timer();
@@ -51,6 +52,7 @@ public class LocalEc2Service extends AmazonService implements Comparable<Service
         this.region = region;
         refreshInstance();
         addShutdownHook();
+        tagString = Service.getTagsString(this);
     }
 
     public void refreshInstance() {
@@ -159,6 +161,11 @@ public class LocalEc2Service extends AmazonService implements Comparable<Service
             tagMap.put(t.getKey(),t.getValue());
         }
         return tagMap;
+    }
+
+    @Override
+    public String getTagsString() {
+        return tagString;
     }
 
     private void addShutdownHook() {
