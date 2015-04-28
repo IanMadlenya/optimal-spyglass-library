@@ -28,6 +28,8 @@ import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.glacier.AmazonGlacierClient;
+import com.amazonaws.services.glacier.model.*;
 import com.amazonaws.services.rds.AmazonRDSClient;
 import com.amazonaws.services.rds.model.DBInstance;
 import com.amazonaws.services.rds.model.DescribeDBInstancesResult;
@@ -99,6 +101,7 @@ public class AmazonAccount {
                 populateRDS();
                 populateDynamoDB();
                 populateS3();
+                populateGlacier();
             }
         } catch (AmazonClientException e) {
             getLogger().error("Error in starting service: " + e.getMessage());
@@ -239,6 +242,22 @@ public class AmazonAccount {
         }
     }
 
+    private void populateGlacier() throws AmazonClientException{
+        for(Region r : regions){
+            if(r.isServiceSupported(ServiceAbbreviations.Glacier)){
+                AmazonGlacierClient glacierClient = new AmazonGlacierClient(credentials.getCredentials());
+                glacierClient.setRegion(r);
+                ListVaultsResult result = glacierClient.listVaults(new ListVaultsRequest());
+                List<DescribeVaultOutput> vaults = result.getVaultList();
+                for(DescribeVaultOutput d : vaults){
+                    DescribeVaultResult res = glacierClient.describeVault(new DescribeVaultRequest(d.getVaultName()));
+                    Service temp = new LocalGlacierService(d.getVaultName(),credentials,r,res,logger);
+                    services.add(temp);
+                }
+            }
+        }
+    }
+
     private void populateStatistics() {
         runningCount = new HashMap<>();
         totalServices = services.size();
@@ -249,6 +268,7 @@ public class AmazonAccount {
         runningCount.put("Redshift", 0);
         runningCount.put("DynamoDB", 0);
         runningCount.put("S3", 0);
+        runningCount.put("Glacier",0);
 
         for (Service s : services) {
             if (Service.runningTitles().contains(s.serviceState().toLowerCase())) {
@@ -256,7 +276,7 @@ public class AmazonAccount {
                 if (runningCount.containsKey(s.serviceType())) {
                     runningCount.put(s.serviceType(), runningCount.get(s.serviceType()) +1);
                 } else {
-                    System.err.println("Service type not found" + s.serviceType());
+                    System.err.println("Service type not found: " + s.serviceType());
                 }
             }
         }
